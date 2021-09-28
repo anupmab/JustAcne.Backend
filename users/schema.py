@@ -1,9 +1,12 @@
 import graphene
+import traceback
+from django.conf import settings
 from graphql_auth import mutations, relay
 from graphql_auth.schema import UserQuery, MeQuery
+from graphql_auth.bases import Output
 from graphene_django import DjangoObjectType
 
-from users.models import AuthUser
+from users.models import AuthUser, UserImage
 
 
 class AuthMutation(graphene.ObjectType):
@@ -16,6 +19,42 @@ class AuthMutation(graphene.ObjectType):
     password_reset = mutations.PasswordReset.Field()
     password_change = mutations.PasswordChange.Field()
 
+
+class ImageMutation(graphene.relay.ClientIDMutation, Output):
+    class Input:
+        email = graphene.String()
+
+    image_url = graphene.String()
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, **kwargs):
+
+        try:
+            email = kwargs.get("email", None)
+            if not email:
+                return ImageMutation(success=False, errors=["Email not provided"], image_url=None)
+            if info.context.FILES.get("image", None):
+                user = AuthUser.objects.get(email=email)
+                user_image = UserImage.objects.create(user=user)
+                user_image.image = info.context.FILES["image"]
+                user_image.save()
+                return ImageMutation(success=True, errors=None, image_url=f"{settings.BE_DOMAIN}{user_image.image.url}")
+            else:
+                return ImageMutation(
+                    success=False,
+                    errors=['image info not provided'],
+                    image_url=None,
+                )
+        except Exception as e:
+            return ImageMutation(
+                False,
+                errors=[traceback.format_exc()],
+                image_url=None,
+            )
+
+
+class UserImageMutation(graphene.ObjectType):
+    user_image = ImageMutation.Field()
 
 # class UserDetailsNode(DjangoObjectType):
 #     class Meta:
