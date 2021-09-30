@@ -21,6 +21,7 @@ class CustomUserManager(BaseUserManager):
         user.is_active = is_active
         user.username = email
         user.is_superuser = is_superuser
+        user.role = 'admin'
         user.save(using=self._db)
         return user
 
@@ -31,11 +32,16 @@ class CustomUserManager(BaseUserManager):
 
 class AuthUser(AbstractUser):
     email = models.EmailField(blank=False, max_length=254, unique=True, verbose_name="email address")
-    first_name = models.CharField(blank=False, max_length=254, verbose_name="first name")
-    last_name = models.CharField(blank=False, max_length=254, verbose_name="last name")
+    first_name = models.CharField(blank=True, max_length=254, verbose_name="first name")
+    last_name = models.CharField(blank=True, max_length=254, verbose_name="last name")
     dob = models.DateField(blank=True, null=True, verbose_name="date of birth")
-    state = models.CharField(blank=False, max_length=254, verbose_name="state")
-    phone_number = models.CharField(blank=False, max_length=20, verbose_name="phone number")
+    state = models.CharField(blank=True, max_length=254, verbose_name="state")
+    phone_number = models.CharField(blank=True, max_length=20, verbose_name="phone number")
+    billing_address = models.JSONField(default=dict)
+    shipping_address = models.JSONField(default=dict)
+    checkout_info = models.JSONField(default=dict)
+    role = models.CharField(max_length=20, default='user', choices=(('user', 'User'), ('admin', 'Admin')))
+    access_token = models.CharField(blank=True, max_length=254, verbose_name="state", default='')
 
     objects = CustomUserManager()
 

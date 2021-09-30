@@ -16,6 +16,9 @@ class UserUtils:
             user_data['dob'] = user.dob.strftime("%m-%d-%Y")
         user_data['phone_number'] = user.phone_number
         user_data['state'] = user.state
+        user_data['billing_address'] = user.billing_address
+        user_data['shipping_address'] = user.shipping_address
+        user_data['role'] = user.role
 
         images = UserImage.objects.filter(user=user)
         user_data['images'] = [f"{settings.BE_DOMAIN}{image.image.url}" for image in images]

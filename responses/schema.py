@@ -21,7 +21,6 @@ class ResponseMutation(relay.ClientIDMutation, Output):
         last_name = graphene.String()
         dob = graphene.String()
         state = graphene.String()
-        phone_number = graphene.String()
         question_responses = graphene.List(QuestionResponseInput)
 
     user_data = GenericScalar()
@@ -32,13 +31,12 @@ class ResponseMutation(relay.ClientIDMutation, Output):
         try:
             email = kwargs.get("email", None)
             if not email:
-                return ResponseMutation(success=False, errors=["Email not provided"], user_data=None)
+                return ResponseMutation(success=False, errors={"message": "Email not provided"}, user_data=None)
 
             first_name = kwargs.get("first_name", None)
             last_name = kwargs.get("last_name", None)
             state = kwargs.get("state", None)
             dob = kwargs.get("dob", None)
-            phone_number = kwargs.get("phone_number", None)
             question_responses = kwargs.get("question_responses", [])
 
             user, created = AuthUser.objects.get_or_create(email=email, username=email)
@@ -49,8 +47,6 @@ class ResponseMutation(relay.ClientIDMutation, Output):
                 user.last_name = last_name
             if dob:
                 user.dob = datetime.strptime(dob, "%m-%d-%Y")
-            if phone_number:
-                user.phone_number = phone_number
             if state:
                 user.state = state
             user.save()
@@ -64,7 +60,7 @@ class ResponseMutation(relay.ClientIDMutation, Output):
         except Exception as e:
             return ResponseMutation(
                 False,
-                [traceback.format_exc()],
+                {"message": traceback.format_exc()},
                 None
             )
 

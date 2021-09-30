@@ -1,27 +1,13 @@
 import graphene
-#from apps.users.schema import UsersQuery, UsersMutation
 from responses.schema import UserResponseMutation
-from users.schema import UserImageMutation
-from graphql_auth.schema import UserQuery, MeQuery
+from users.schema import UserMutation, UserQuery
 
 
-# class Query(
-#     ConnectionsQuery,
-#     BaseQuery,
-#     UsersQuery,
-#     NotificationsQuery,
-#     StripePriceQuery,
-#     PlaidAccountQuery,
-#     RoundupHistoryQuery,
-#     graphene.ObjectType,
-# ):
-#     pass
-
-class Query(UserQuery, MeQuery, graphene.ObjectType):
+class Query(UserQuery, graphene.ObjectType):
     pass
 
 
-class Mutation(UserResponseMutation, UserImageMutation, graphene.ObjectType):
+class Mutation(UserResponseMutation, UserMutation, graphene.ObjectType):
     pass
 
 
