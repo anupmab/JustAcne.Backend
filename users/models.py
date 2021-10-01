@@ -21,7 +21,7 @@ class CustomUserManager(BaseUserManager):
         user.is_active = is_active
         user.username = email
         user.is_superuser = is_superuser
-        user.role = 'admin'
+        user.access_type = 'ADMIN'
         user.save(using=self._db)
         return user
 
@@ -40,8 +40,7 @@ class AuthUser(AbstractUser):
     billing_address = models.JSONField(default=dict)
     shipping_address = models.JSONField(default=dict)
     checkout_info = models.JSONField(default=dict)
-    role = models.CharField(max_length=20, default='user', choices=(('user', 'User'), ('admin', 'Admin')))
-    access_token = models.CharField(blank=True, max_length=254, verbose_name="state", default='')
+    access_type = models.CharField(max_length=20, default='USER', choices=(('USER', 'USER'), ('ADMIN', 'ADMIN')))
 
     objects = CustomUserManager()
 

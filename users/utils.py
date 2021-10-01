@@ -18,7 +18,7 @@ class UserUtils:
         user_data['state'] = user.state
         user_data['billing_address'] = user.billing_address
         user_data['shipping_address'] = user.shipping_address
-        user_data['role'] = user.role
+        user_data['access_type'] = user.access_type
 
         images = UserImage.objects.filter(user=user)
         user_data['images'] = [f"{settings.BE_DOMAIN}{image.image.url}" for image in images]

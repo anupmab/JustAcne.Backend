@@ -26,7 +26,6 @@ class ResponseMutation(relay.ClientIDMutation, Output):
     user_data = GenericScalar()
 
     @classmethod
-    # @login_required
     def mutate_and_get_payload(cls, root, info, **kwargs):
         try:
             email = kwargs.get("email", None)
@@ -40,7 +39,7 @@ class ResponseMutation(relay.ClientIDMutation, Output):
             question_responses = kwargs.get("question_responses", [])
 
             user, created = AuthUser.objects.get_or_create(email=email, username=email)
-            user.set_unusable_password()
+            user.set_password('123456') # FOR TESTING
             if first_name:
                 user.first_name = first_name
             if last_name:
@@ -52,7 +51,8 @@ class ResponseMutation(relay.ClientIDMutation, Output):
             user.save()
 
             for response in question_responses:
-                user_response, created = UserResponse.objects.get_or_create(user=user, question_id=response['question_id'])
+                user_response, created = UserResponse.objects.get_or_create(user=user,
+                                                                            question_id=response['question_id'])
                 user_response.answers = response['answers']
                 user_response.save()
 

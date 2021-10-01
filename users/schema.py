@@ -1,15 +1,14 @@
 import graphene
 import traceback
-import random
-import string
+
 from django.conf import settings
-from graphql_auth import relay
-from graphql_auth.schema import UserQuery, MeQuery
+from graphql_jwt.decorators import login_required
 from graphql_auth.bases import Output
 from graphene.types.generic import GenericScalar
 
 from users.models import AuthUser, UserImage
 from users.utils import UserUtils
+from users.relay import ObtainJSONWebToken, RefreshToken, RevokeToken
 
 
 class ImageMutation(graphene.relay.ClientIDMutation, Output):
@@ -60,38 +59,28 @@ class CheckoutCompleteMutation(graphene.relay.ClientIDMutation, Output):
         )
 
 
-class LoginMutation(graphene.relay.ClientIDMutation, Output):
-    class Input:
-        email = graphene.String()
-        password = graphene.String()
-
-    access_token = graphene.String()
-    user_data = GenericScalar()
-
-    @classmethod
-    def mutate_and_get_payload(cls, root, info, **kwargs):
-        email = kwargs.get("email", None)
-        password = kwargs.get("password", None)
-
-        user = AuthUser.objects.filter(email=email).first()
-        if not user:
-            return LoginMutation(success=False, errors={"message": "Invalid Email"}, access_token=None, user_data=None)
-
-        if user.check_password(password):
-            user.access_token = ''.join(random.choices(string.ascii_uppercase + string.digits +
-                                                       string.ascii_lowercase, k=128))
-            user.save()
-            return LoginMutation(success=True, errors=None, access_token=user.access_token,
-                                 user_data=UserUtils.get_user_data(user))
-
-        return LoginMutation(success=False, errors={"message": "Invalid Password"}, access_token=None, user_data=None)
-
-
 class UserMutation(graphene.ObjectType):
     user_image = ImageMutation.Field()
     checkout_complete = CheckoutCompleteMutation.Field()
-    login = LoginMutation.Field()
+
+    login = ObtainJSONWebToken.Field()
+    refresh_token = RefreshToken.Field()
+    logout = RevokeToken.Field()
 
 
-class UserQuery(UserQuery, MeQuery, graphene.ObjectType):
-    pass
+class UserQuery(graphene.ObjectType):
+    user_list = graphene.List(GenericScalar, limit=graphene.Int(100), offset=graphene.Int(0))
+    me = GenericScalar()
+
+    @login_required
+    def resolve_user_list(self, info, limit, offset):
+        user_list = []
+        users = AuthUser.objects.filter(access_type="USER").order_by('-date_joined')[offset:offset + limit]
+        for user in users:
+            user_list.append(UserUtils.get_user_data(user))
+        return user_list
+
+    @login_required
+    def resolve_me(self, info):
+        user = info.context.user
+        return UserUtils.get_user_data(user)
