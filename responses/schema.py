@@ -1,4 +1,6 @@
 import traceback
+import string
+import random
 from datetime import datetime
 import graphene
 from graphql_auth.bases import Output
@@ -38,8 +40,16 @@ class ResponseMutation(relay.ClientIDMutation, Output):
             dob = kwargs.get("dob", None)
             question_responses = kwargs.get("question_responses", [])
 
-            user, created = AuthUser.objects.get_or_create(email=email, username=email)
-            user.set_password('123456') # FOR TESTING
+            user = AuthUser.objects.filter(email=email).first()
+            if user:
+                if user.is_active:
+                    return ResponseMutation(errors={"message": "User with email already exists. Please login."},
+                                            user_data=None, success=False)
+            else:
+                user = AuthUser.objects.create(email=email, username=email, is_active=False)
+                user.set_password(''.join(random.choices(string.ascii_uppercase + string.digits, k=10)))
+                user.save()
+
             if first_name:
                 user.first_name = first_name
             if last_name:
@@ -48,6 +58,7 @@ class ResponseMutation(relay.ClientIDMutation, Output):
                 user.dob = datetime.strptime(dob, "%m-%d-%Y")
             if state:
                 user.state = state
+
             user.save()
 
             for response in question_responses:

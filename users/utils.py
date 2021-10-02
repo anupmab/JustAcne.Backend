@@ -19,6 +19,7 @@ class UserUtils:
         user_data['billing_address'] = user.billing_address
         user_data['shipping_address'] = user.shipping_address
         user_data['access_type'] = user.access_type
+        user_data['checkout_completed'] = user.is_active
 
         images = UserImage.objects.filter(user=user)
         user_data['images'] = [f"{settings.BE_DOMAIN}{image.image.url}" for image in images]

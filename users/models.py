@@ -37,10 +37,11 @@ class AuthUser(AbstractUser):
     dob = models.DateField(blank=True, null=True, verbose_name="date of birth")
     state = models.CharField(blank=True, max_length=254, verbose_name="state")
     phone_number = models.CharField(blank=True, max_length=20, verbose_name="phone number")
-    billing_address = models.JSONField(default=dict)
-    shipping_address = models.JSONField(default=dict)
-    checkout_info = models.JSONField(default=dict)
+    billing_address = models.JSONField(blank=True, default=dict)
+    shipping_address = models.JSONField(blank=True, default=dict)
+    checkout_info = models.JSONField(blank=True, default=dict)
     access_type = models.CharField(max_length=20, default='USER', choices=(('USER', 'USER'), ('ADMIN', 'ADMIN')))
+    email_token = models.CharField(blank=True, max_length=254, verbose_name="state", default='')
 
     objects = CustomUserManager()
 

@@ -1,14 +1,18 @@
 import graphene
 import traceback
+import random
+import string
 
+from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 from graphql_jwt.decorators import login_required
+from graphql_jwt.exceptions import PermissionDenied
 from graphql_auth.bases import Output
 from graphene.types.generic import GenericScalar
 
 from users.models import AuthUser, UserImage
 from users.utils import UserUtils
-from users.relay import ObtainJSONWebToken, RefreshToken, RevokeToken
+from users.relay import ObtainJSONWebToken, RefreshToken, RevokeToken, Register, PasswordSet
 
 
 class ImageMutation(graphene.relay.ClientIDMutation, Output):
@@ -47,23 +51,94 @@ class ImageMutation(graphene.relay.ClientIDMutation, Output):
 class CheckoutCompleteMutation(graphene.relay.ClientIDMutation, Output):
     class Input:
         session_id = graphene.String()
+        email = graphene.String()
 
     @classmethod
     def mutate_and_get_payload(cls, root, info, **kwargs):
         session_id = kwargs.get("session_id", None)
+        email = kwargs.get("email", None)
+        user = AuthUser.objects.get(email=email)
         # session = stripe.checkout.Session.retrieve(session_id)
         # intent = stripe.SetupIntent.retrieve(session["setup_intent"], expand=["payment_method"])
+
+        user.email_token = ''.join(random.choices(string.ascii_uppercase+string.ascii_uppercase+string.digits, k=128))
+        user.is_active = True
+        user.save()
+
+        msg = EmailMessage(
+            'Thanks for your purchase!',
+            (f'Thanks for your purchase. Someone will reach out to schedule a consult soon.<br>'
+             f'Please reach out with any questions at info@justacne.com.<br><br>'
+             f'You can set your password and login to dashboard using following link:<br>'
+             f'http://54.234.221.23/set-password/?token={user.email_token}'),
+
+            'Just Acne <anup@mabventures.com>',
+            [user.email]
+        )
+        msg.content_subtype = "html"
+        msg.send()
+
         return CheckoutCompleteMutation(
             success=True,
             errors=None
         )
 
 
+class PasswordResetMutation(graphene.relay.ClientIDMutation, Output):
+    class Input:
+        token = graphene.String()
+        password = graphene.String()
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, **kwargs):
+        token = kwargs.get("token", None)
+        password = kwargs.get("password", None)
+        user = AuthUser.objects.filter(email_token=token).first()
+        if not user:
+            return PasswordResetMutation(success=False, errors={"message": "Invalid Token"})
+        user.set_password(password)
+        user.email_token = ''.join(
+            random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=128))
+        user.save()
+        return PasswordResetMutation(success=True, errors=None)
+
+
+class PasswordResetEmailMutation(graphene.relay.ClientIDMutation, Output):
+    class Input:
+        email = graphene.String()
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, **kwargs):
+        email = kwargs.get("email", None)
+        user = AuthUser.objects.filter(email=email).first()
+        if not user:
+            return PasswordResetEmailMutation(success=False, errors={"message": "Invalid Email"})
+
+        user.email_token = ''.join(
+            random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=128))
+        user.save()
+
+        msg = EmailMessage(
+            'Password Reset',
+            (f'You are receiving this email because you or someone else has requested a password for your user account.'
+             f'<br>It can be safely ignored if you did not request a password reset.<br><br>'
+             f'Click the link below to reset your password:<br>'
+             f'http://54.234.221.23/reset-password/?token={user.email_token}'),
+
+            'Just Acne <anup@mabventures.com>',
+            [user.email]
+        )
+        msg.content_subtype = "html"
+        msg.send()
+        return PasswordResetEmailMutation(success=True, errors=None)
+
+
 class UserMutation(graphene.ObjectType):
     user_image = ImageMutation.Field()
     checkout_complete = CheckoutCompleteMutation.Field()
-
     login = ObtainJSONWebToken.Field()
+    send_password_reset_email = PasswordResetEmailMutation.Field()
+    reset_password = PasswordResetMutation.Field()
     refresh_token = RefreshToken.Field()
     logout = RevokeToken.Field()
 
@@ -74,6 +149,10 @@ class UserQuery(graphene.ObjectType):
 
     @login_required
     def resolve_user_list(self, info, limit, offset):
+        user = info.context.user
+        if user.access_type != "ADMIN":
+            return PermissionDenied()
+            return {"success": False, 'errors': {"message": "You do not have permission to perform this actiona"}}
         user_list = []
         users = AuthUser.objects.filter(access_type="USER").order_by('-date_joined')[offset:offset + limit]
         for user in users:
