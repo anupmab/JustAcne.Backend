@@ -2,6 +2,7 @@ import graphene
 import traceback
 import random
 import string
+import stripe
 
 from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
@@ -13,6 +14,8 @@ from graphene.types.generic import GenericScalar
 from users.models import AuthUser, UserImage
 from users.utils import UserUtils
 from users.relay import ObtainJSONWebToken, RefreshToken, RevokeToken, Register, PasswordSet
+
+stripe.api_key = "sk_test_51C9uG5BlGHOSnQCzjwRW3LasUgHLFuAHAGNuP2TwpVSb1VAeAygTOM9C0CMH7rvHjjNIxzqpoCHIfMnxWk4F9TU000o397fUkn"
 
 
 class ImageMutation(graphene.relay.ClientIDMutation, Output):
@@ -48,6 +51,47 @@ class ImageMutation(graphene.relay.ClientIDMutation, Output):
             )
 
 
+class StripeCheckoutMutation(graphene.relay.ClientIDMutation, Output):
+    class Input:
+        email = graphene.String()
+        success_url = graphene.String()
+        failure_url = graphene.String()
+
+    checkout_url = graphene.String()
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, **kwargs):
+        success_url = kwargs.get("success_url", None)
+        failure_url = kwargs.get("failure_url", None)
+        email = kwargs.get("email", None)
+
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': 'Just Acne Shipping Charge',
+                    },
+                    'unit_amount': 1000,
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            billing_address_collection='required',
+            phone_number_collection={
+                'enabled': True,
+            },
+            shipping_address_collection={
+                'allowed_countries': ['US', 'CA'],
+            },
+            customer_email=email,
+            success_url=success_url,
+            cancel_url=failure_url,
+        )
+        return StripeCheckoutMutation(success=True, errors=None, checkout_url=session.url )
+
+
 class CheckoutCompleteMutation(graphene.relay.ClientIDMutation, Output):
     class Input:
         session_id = graphene.String()
@@ -58,8 +102,12 @@ class CheckoutCompleteMutation(graphene.relay.ClientIDMutation, Output):
         session_id = kwargs.get("session_id", None)
         email = kwargs.get("email", None)
         user = AuthUser.objects.get(email=email)
-        # session = stripe.checkout.Session.retrieve(session_id)
+        session = stripe.checkout.Session.retrieve(session_id)
+
         # intent = stripe.SetupIntent.retrieve(session["setup_intent"], expand=["payment_method"])
+
+        user.billing_address = session["shipping"]["address"]
+        user.shipping_address = session["shipping"]["address"]
 
         user.email_token = ''.join(random.choices(string.ascii_uppercase+string.ascii_uppercase+string.digits, k=128))
         user.is_active = True
@@ -70,7 +118,7 @@ class CheckoutCompleteMutation(graphene.relay.ClientIDMutation, Output):
             (f'Thanks for your purchase. Someone will reach out to schedule a consult soon.<br>'
              f'Please reach out with any questions at info@justacne.com.<br><br>'
              f'You can set your password and login to dashboard using following link:<br>'
-             f'http://54.234.221.23/set-password/?token={user.email_token}'),
+             f'https://just-acne.vercel.app/set-password/{user.email_token}'),
 
             'Just Acne <anup@mabventures.com>',
             [user.email]
@@ -123,7 +171,7 @@ class PasswordResetEmailMutation(graphene.relay.ClientIDMutation, Output):
             (f'You are receiving this email because you or someone else has requested a password for your user account.'
              f'<br>It can be safely ignored if you did not request a password reset.<br><br>'
              f'Click the link below to reset your password:<br>'
-             f'http://54.234.221.23/reset-password/?token={user.email_token}'),
+             f'https://just-acne.vercel.app/reset-password/{user.email_token}'),
 
             'Just Acne <anup@mabventures.com>',
             [user.email]
@@ -135,6 +183,7 @@ class PasswordResetEmailMutation(graphene.relay.ClientIDMutation, Output):
 
 class UserMutation(graphene.ObjectType):
     user_image = ImageMutation.Field()
+    stripe_checkout = StripeCheckoutMutation.Field()
     checkout_complete = CheckoutCompleteMutation.Field()
     login = ObtainJSONWebToken.Field()
     send_password_reset_email = PasswordResetEmailMutation.Field()
