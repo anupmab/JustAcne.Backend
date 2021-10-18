@@ -58,3 +58,4 @@ def get_image_upload_path(instance, filename):
 class UserImage(models.Model):
     user = models.ForeignKey(AuthUser, on_delete=models.CASCADE)
     image = models.ImageField(null=True, blank=True, upload_to=get_image_upload_path)
+    date_created = models.DateTimeField(auto_now_add=True, db_index=True)

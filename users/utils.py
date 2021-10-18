@@ -20,9 +20,11 @@ class UserUtils:
         user_data['shipping_address'] = user.shipping_address
         user_data['access_type'] = user.access_type
         user_data['checkout_completed'] = user.is_active
+        user_data['date_joined'] = user.date_joined.strftime("%m-%d-%Y")
 
         images = UserImage.objects.filter(user=user)
-        user_data['images'] = [f"{settings.BE_DOMAIN}{image.image.url}" for image in images]
+        user_data['images'] = [{'url': f"{settings.BE_DOMAIN}{image.image.url}",
+                                'date': image.date_created.strftime("%m-%d-%Y")} for image in images]
 
         responses = UserResponse.objects.filter(user=user)
         question_responses = {}
