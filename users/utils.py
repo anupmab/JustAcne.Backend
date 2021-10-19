@@ -22,7 +22,10 @@ class UserUtils:
         user_data['access_type'] = user.access_type
         user_data['checkout_completed'] = user.is_active
         user_data['date_joined'] = user.date_joined.strftime("%m-%d-%Y")
-        user_data['profile_image'] = f"{settings.BE_DOMAIN}{user.profile_image.url}"
+        if user.user.profile_image:
+            user_data['profile_image'] = f"{settings.BE_DOMAIN}{user.profile_image.url}"
+        else:
+            user_data['profile_image'] = None
 
         images = UserImage.objects.filter(user=user)
         user_data['images'] = [{'url': f"{settings.BE_DOMAIN}{image.image.url}",
