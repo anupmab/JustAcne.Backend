@@ -193,17 +193,20 @@ class UserMutation(graphene.ObjectType):
 
 
 class UserQuery(graphene.ObjectType):
-    user_list = graphene.List(GenericScalar, limit=graphene.Int(100), offset=graphene.Int(0))
+    user_list = graphene.List(GenericScalar, limit=graphene.Int(100), offset=graphene.Int(0), user_id=graphene.Int(0))
     me = GenericScalar()
 
     @login_required
-    def resolve_user_list(self, info, limit, offset):
+    def resolve_user_list(self, info, limit, offset, user_id):
         user = info.context.user
         if user.access_type != "ADMIN":
             return PermissionDenied()
             return {"success": False, 'errors': {"message": "You do not have permission to perform this actiona"}}
         user_list = []
-        users = AuthUser.objects.filter(access_type="USER").order_by('-date_joined')[offset:offset + limit]
+        if user_id:
+            users = AuthUser.objects.filter(id=user_id)
+        else:
+            users = AuthUser.objects.filter(access_type="USER").order_by('-date_joined')[offset:offset + limit]
         for user in users:
             user_list.append(UserUtils.get_user_data(user))
         return user_list

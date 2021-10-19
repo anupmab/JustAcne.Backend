@@ -9,6 +9,7 @@ class UserUtils:
     @staticmethod
     def get_user_data(user):
         user_data = {'dob':''}
+        user_data['id'] = user.id
         user_data['email'] = user.email
         user_data['first_name'] = user.first_name
         user_data['last_name'] = user.last_name
