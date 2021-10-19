@@ -51,6 +51,34 @@ class ImageMutation(graphene.relay.ClientIDMutation, Output):
             )
 
 
+class ProfileImageMutation(graphene.relay.ClientIDMutation, Output):
+
+    profile_url = graphene.String()
+
+    @classmethod
+    @login_required
+    def mutate_and_get_payload(cls, root, info, **kwargs):
+
+        try:
+            user = info.context.user
+            if info.context.FILES.get("image", None):
+                user.profile_image = info.context.FILES["image"]
+                user.save()
+                return ProfileImageMutation(success=True, errors=None, profile_url=f"{settings.BE_DOMAIN}{user.profile_image.url}")
+            else:
+                return ProfileImageMutation(
+                    success=False,
+                    errors={"message": 'Profile Image not provided'},
+                    profile_url=None,
+                )
+        except Exception as e:
+            return ProfileImageMutation(
+                False,
+                errors={"message": traceback.format_exc()},
+                profile_url=None,
+            )
+
+
 class StripeCheckoutMutation(graphene.relay.ClientIDMutation, Output):
     class Input:
         email = graphene.String()
@@ -102,12 +130,12 @@ class CheckoutCompleteMutation(graphene.relay.ClientIDMutation, Output):
         session_id = kwargs.get("session_id", None)
         email = kwargs.get("email", None)
         user = AuthUser.objects.get(email=email)
+
         session = stripe.checkout.Session.retrieve(session_id)
-
-        # intent = stripe.SetupIntent.retrieve(session["setup_intent"], expand=["payment_method"])
-
-        user.billing_address = session["shipping"]["address"]
+        intent = stripe.PaymentIntent.retrieve(session["payment_intent"], expand=["payment_method"])
+        user.billing_address = intent['payment_method']['billing_details']['address']
         user.shipping_address = session["shipping"]["address"]
+        user.phone_number = session["customer_details"]["phone"]
 
         user.email_token = ''.join(random.choices(string.ascii_uppercase+string.ascii_uppercase+string.digits, k=128))
         user.is_active = True
@@ -118,7 +146,7 @@ class CheckoutCompleteMutation(graphene.relay.ClientIDMutation, Output):
             (f'Thanks for your purchase. Someone will reach out to schedule a consult soon.<br>'
              f'Please reach out with any questions at info@justacne.com.<br><br>'
              f'You can set your password and login to dashboard using following link:<br>'
-             f'https://just-acne.vercel.app/set-password/{user.email_token}'),
+             f'http://ja.mab-development.com/set-password/{user.email_token}'),
 
             'Just Acne <anup@mabventures.com>',
             [user.email]
@@ -171,7 +199,7 @@ class PasswordResetEmailMutation(graphene.relay.ClientIDMutation, Output):
             (f'You are receiving this email because you or someone else has requested a password for your user account.'
              f'<br>It can be safely ignored if you did not request a password reset.<br><br>'
              f'Click the link below to reset your password:<br>'
-             f'https://just-acne.vercel.app/reset-password/{user.email_token}'),
+             f'http://ja.mab-development.com/reset-password/{user.email_token}'),
 
             'Just Acne <anup@mabventures.com>',
             [user.email]
@@ -183,6 +211,7 @@ class PasswordResetEmailMutation(graphene.relay.ClientIDMutation, Output):
 
 class UserMutation(graphene.ObjectType):
     user_image = ImageMutation.Field()
+    profile_image = ProfileImageMutation.Field()
     stripe_checkout = StripeCheckoutMutation.Field()
     checkout_complete = CheckoutCompleteMutation.Field()
     login = ObtainJSONWebToken.Field()

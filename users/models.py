@@ -30,8 +30,13 @@ class CustomUserManager(BaseUserManager):
         return user
 
 
+def get_image_upload_path(instance, filename):
+    return "user_images/{}/{}".format(instance.id, filename)
+
+
 class AuthUser(AbstractUser):
     email = models.EmailField(blank=False, max_length=254, unique=True, verbose_name="email address")
+    profile_image = models.ImageField(null=True, blank=True, upload_to=get_image_upload_path)
     first_name = models.CharField(blank=True, max_length=254, verbose_name="first name")
     last_name = models.CharField(blank=True, max_length=254, verbose_name="last name")
     dob = models.DateField(blank=True, null=True, verbose_name="date of birth")
@@ -49,10 +54,6 @@ class AuthUser(AbstractUser):
     EMAIL_FIELD = "email"
     REQUIRED_FIELDS = []
     GET_OBJECT_FIELD = 'name'
-
-
-def get_image_upload_path(instance, filename):
-    return "user_images/{}/{}".format(instance.id, filename)
 
 
 class UserImage(models.Model):
