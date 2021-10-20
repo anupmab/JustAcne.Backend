@@ -222,7 +222,7 @@ class UserMutation(graphene.ObjectType):
 
 
 class UserQuery(graphene.ObjectType):
-    user_list = graphene.List(GenericScalar, limit=graphene.Int(100), offset=graphene.Int(0), user_id=graphene.Int(0))
+    user_list = graphene.Field(GenericScalar, limit=graphene.Int(100), offset=graphene.Int(0), user_id=graphene.Int(0))
     me = GenericScalar()
 
     @login_required
@@ -234,11 +234,14 @@ class UserQuery(graphene.ObjectType):
         user_list = []
         if user_id:
             users = AuthUser.objects.filter(id=user_id)
+            total_count = 1
         else:
-            users = AuthUser.objects.filter(access_type="USER").order_by('-date_joined')[offset:offset + limit]
+            users = AuthUser.objects.filter(access_type="USER").order_by('-date_joined')
+            total_count = users.count()
+            users = users[offset:offset + limit]
         for user in users:
             user_list.append(UserUtils.get_user_data(user))
-        return user_list
+        return {"total_count": total_count, "users": user_list}
 
     @login_required
     def resolve_me(self, info):
