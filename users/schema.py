@@ -15,7 +15,7 @@ from users.models import AuthUser, UserImage
 from users.utils import UserUtils
 from users.relay import ObtainJSONWebToken, RefreshToken, RevokeToken, Register, PasswordSet
 
-stripe.api_key = "sk_test_51C9uG5BlGHOSnQCzjwRW3LasUgHLFuAHAGNuP2TwpVSb1VAeAygTOM9C0CMH7rvHjjNIxzqpoCHIfMnxWk4F9TU000o397fUkn"
+stripe.api_key = "sk_test_51JPz90LTGfmZPVsyzxRyjPFCmr63y6R5ORVW0OnUEA9qT53s79yMQvfgeyVFTriJmW9RJCjOPFaKZnLWfvMlsrhJ00E4W3yw70"
 
 
 class ImageMutation(graphene.relay.ClientIDMutation, Output):
@@ -146,9 +146,9 @@ class CheckoutCompleteMutation(graphene.relay.ClientIDMutation, Output):
             (f'Thanks for your purchase. Someone will reach out to schedule a consult soon.<br>'
              f'Please reach out with any questions at info@justacne.com.<br><br>'
              f'You can set your password and login to dashboard using following link:<br>'
-             f'http://ja.mab-development.com/set-password/{user.email_token}'),
+             f'https://justacne.com/set-password/{user.email_token}'),
 
-            'Just Acne <anup@mabventures.com>',
+            'Just Acne <justacne@mab-development.com>',
             [user.email]
         )
         msg.content_subtype = "html"
@@ -199,9 +199,9 @@ class PasswordResetEmailMutation(graphene.relay.ClientIDMutation, Output):
             (f'You are receiving this email because you or someone else has requested a password for your user account.'
              f'<br>It can be safely ignored if you did not request a password reset.<br><br>'
              f'Click the link below to reset your password:<br>'
-             f'http://ja.mab-development.com/reset-password/{user.email_token}'),
+             f'https://justacne.com/reset-password/{user.email_token}'),
 
-            'Just Acne <anup@mabventures.com>',
+            'Just Acne <justacne@mab-development.com>',
             [user.email]
         )
         msg.content_subtype = "html"
