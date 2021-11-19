@@ -59,4 +59,5 @@ class AuthUser(AbstractUser):
 class UserImage(models.Model):
     user = models.ForeignKey(AuthUser, on_delete=models.CASCADE)
     image = models.ImageField(null=True, blank=True, upload_to=get_image_upload_path)
+    label = models.CharField(blank=True, max_length=100, null=True, verbose_name="Image label")
     date_created = models.DateTimeField(auto_now_add=True, db_index=True)

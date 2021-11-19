@@ -21,6 +21,7 @@ stripe.api_key = "sk_test_51JPz90LTGfmZPVsyzxRyjPFCmr63y6R5ORVW0OnUEA9qT53s79yMQ
 class ImageMutation(graphene.relay.ClientIDMutation, Output):
     class Input:
         email = graphene.String()
+        label = graphene.String()
 
     image_url = graphene.String()
 
@@ -29,12 +30,14 @@ class ImageMutation(graphene.relay.ClientIDMutation, Output):
 
         try:
             email = kwargs.get("email", None)
+            label = kwargs.get("label", None)
             if not email:
                 return ImageMutation(success=False, errors={"message": "Email not provided"}, image_url=None)
             if info.context.FILES.get("image", None):
                 user = AuthUser.objects.get(email=email)
                 user_image = UserImage.objects.create(user=user)
                 user_image.image = info.context.FILES["image"]
+                user_image.label = label
                 user_image.save()
                 return ImageMutation(success=True, errors=None, image_url=f"{settings.BE_DOMAIN}{user_image.image.url}")
             else:
@@ -63,6 +66,7 @@ class ProfileImageMutation(graphene.relay.ClientIDMutation, Output):
             user = info.context.user
             if info.context.FILES.get("image", None):
                 user.profile_image = info.context.FILES["image"]
+
                 user.save()
                 return ProfileImageMutation(success=True, errors=None, profile_url=f"{settings.BE_DOMAIN}{user.profile_image.url}")
             else:

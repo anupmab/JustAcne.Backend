@@ -29,7 +29,8 @@ class UserUtils:
 
         images = UserImage.objects.filter(user=user)
         user_data['images'] = [{'url': f"{settings.BE_DOMAIN}{image.image.url}",
-                                'date': image.date_created.strftime("%m-%d-%Y")} for image in images]
+                                'date': image.date_created.strftime("%m-%d-%Y"),
+                                'label': image.label} for image in images]
 
         responses = UserResponse.objects.filter(user=user)
         question_responses = {}
