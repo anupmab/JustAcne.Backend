@@ -3,8 +3,10 @@ import traceback
 import random
 import string
 import stripe
+from datetime import datetime
 
 from django.core.mail import send_mail, EmailMessage
+from django.template.loader import render_to_string
 from django.conf import settings
 from graphql_jwt.decorators import login_required
 from graphql_jwt.exceptions import PermissionDenied
@@ -145,13 +147,13 @@ class CheckoutCompleteMutation(graphene.relay.ClientIDMutation, Output):
         user.is_active = True
         user.save()
 
-        msg = EmailMessage(
-            'Thanks for your purchase!',
-            (f'Thanks for your purchase. Someone will reach out to schedule a consult soon.<br>'
-             f'Please reach out with any questions at info@justacne.com.<br><br>'
-             f'You can set your password and login to dashboard using following link:<br>'
-             f'https://justacne.com/set-password/{user.email_token}'),
+        content = render_to_string('welcome_email.html', {'first_name': user.first_name.capitalize(),
+                                                          'token': user.email_token,
+                                                          'year': str(datetime.now().year)})
 
+        msg = EmailMessage(
+            'Welcome to Just Acne!',
+            content,
             'Just Acne <justacne@mab-development.com>',
             [user.email]
         )
@@ -198,13 +200,12 @@ class PasswordResetEmailMutation(graphene.relay.ClientIDMutation, Output):
             random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=128))
         user.save()
 
+        content = render_to_string('password_reset_email.html', {'first_name': user.first_name.capitalize(),
+                                                                 'token': user.email_token,
+                                                                 'year': str(datetime.now().year)})
         msg = EmailMessage(
-            'Password Reset',
-            (f'You are receiving this email because you or someone else has requested a password for your user account.'
-             f'<br>It can be safely ignored if you did not request a password reset.<br><br>'
-             f'Click the link below to reset your password:<br>'
-             f'https://justacne.com/reset-password/{user.email_token}'),
-
+            'Just Acne Password Reset',
+            content,
             'Just Acne <justacne@mab-development.com>',
             [user.email]
         )
