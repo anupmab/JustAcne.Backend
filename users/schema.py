@@ -15,7 +15,7 @@ from users.models import AuthUser, UserImage
 from users.utils import UserUtils
 from users.relay import ObtainJSONWebToken, RefreshToken, RevokeToken, Register, PasswordSet
 
-stripe.api_key = "sk_test_51JPz90LTGfmZPVsyzxRyjPFCmr63y6R5ORVW0OnUEA9qT53s79yMQvfgeyVFTriJmW9RJCjOPFaKZnLWfvMlsrhJ00E4W3yw70"
+stripe.api_key = settings.STRIPE_API_KEY
 
 
 class ImageMutation(graphene.relay.ClientIDMutation, Output):
