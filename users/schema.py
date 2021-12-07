@@ -131,6 +131,8 @@ class CheckoutCompleteMutation(graphene.relay.ClientIDMutation, Output):
         session_id = graphene.String()
         email = graphene.String()
 
+    password_token = graphene.String()
+
     @classmethod
     def mutate_and_get_payload(cls, root, info, **kwargs):
         session_id = kwargs.get("session_id", None)
@@ -148,7 +150,6 @@ class CheckoutCompleteMutation(graphene.relay.ClientIDMutation, Output):
         user.save()
 
         content = render_to_string('welcome_email.html', {'first_name': user.first_name.capitalize(),
-                                                          'token': user.email_token,
                                                           'year': str(datetime.now().year)})
 
         msg = EmailMessage(
@@ -162,7 +163,8 @@ class CheckoutCompleteMutation(graphene.relay.ClientIDMutation, Output):
 
         return CheckoutCompleteMutation(
             success=True,
-            errors=None
+            errors=None,
+            password_token=user.email_token
         )
 
 
