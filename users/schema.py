@@ -13,6 +13,9 @@ from graphql_jwt.exceptions import PermissionDenied
 from graphql_auth.bases import Output
 from graphene.types.generic import GenericScalar
 
+import mailchimp_marketing as MailchimpMarketing
+import mailchimp_transactional as MailchimpTransactional
+
 from users.models import AuthUser, UserImage
 from users.utils import UserUtils
 from users.relay import ObtainJSONWebToken, RefreshToken, RevokeToken, Register, PasswordSet
@@ -160,6 +163,29 @@ class CheckoutCompleteMutation(graphene.relay.ClientIDMutation, Output):
         )
         msg.content_subtype = "html"
         msg.send()
+
+        # message = {'html': content, 'subject': "Just Acne Password Reset",
+        #            'to': [{"email": user.email}], 'from_mail': "support@justacne.com"}
+        # mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_TRANSACTIONAL_API_KEY)
+        # mailchimp.messages.send({"message": message})
+
+        try:
+            mailchimp = MailchimpMarketing.Client()
+            mailchimp.set_config({
+                "api_key": settings.MAILCHIMP_MARKETING_API_KEY,
+                "server": settings.MAILCHIMP_SERVER_PREFIX
+            })
+            member_info = {
+                "email_address": user.email,
+                "status": "subscribed",
+                "merge_fields": {
+                    "FNAME": user.first_name,
+                    "LNAME": user.last_name
+                }
+            }
+            mailchimp.lists.add_list_member(settings.MAILCHIMP_LIST_ID, member_info)
+        except:
+            traceback.print_exc()
 
         return CheckoutCompleteMutation(
             success=True,
