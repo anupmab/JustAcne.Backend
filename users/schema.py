@@ -3,6 +3,7 @@ import traceback
 import random
 import string
 import stripe
+import requests
 from datetime import datetime
 
 from django.core.mail import send_mail, EmailMessage
@@ -155,19 +156,23 @@ class CheckoutCompleteMutation(graphene.relay.ClientIDMutation, Output):
         content = render_to_string('welcome_email.html', {'first_name': user.first_name.capitalize(),
                                                           'year': str(datetime.now().year)})
 
-        msg = EmailMessage(
-            'Welcome to Just Acne!',
-            content,
-            'Just Acne <justacne@mab-development.com>',
-            [user.email]
-        )
-        msg.content_subtype = "html"
-        msg.send()
+        # msg = EmailMessage(
+        #     'Welcome to Just Acne!',
+        #     content,
+        #     'Just Acne <justacne@mab-development.com>',
+        #     [user.email]
+        # )
+        # msg.content_subtype = "html"
+        # msg.send()
 
-        # message = {'html': content, 'subject': "Just Acne Password Reset",
-        #            'to': [{"email": user.email}], 'from_mail': "support@justacne.com"}
-        # mailchimp = MailchimpTransactional.Client(settings.MAILCHIMP_TRANSACTIONAL_API_KEY)
-        # mailchimp.messages.send({"message": message})
+        message = {"key": settings.MAILCHIMP_TRANSACTIONAL_API_KEY,
+                   "message": {"from_email": "support@justacne.com", "subject": 'Welcome to Just Acne!',
+                               "html": content, "to": [{"email": user.email, "type": "to"}]
+                               }
+                   }
+
+        headers = {'Content-type': 'application/json'}
+        requests.post(url="https://mandrillapp.com/api/1.0/messages/send", json=message, headers=headers)
 
         try:
             mailchimp = MailchimpMarketing.Client()
@@ -231,14 +236,24 @@ class PasswordResetEmailMutation(graphene.relay.ClientIDMutation, Output):
         content = render_to_string('password_reset_email.html', {'first_name': user.first_name.capitalize(),
                                                                  'token': user.email_token,
                                                                  'year': str(datetime.now().year)})
-        msg = EmailMessage(
-            'Just Acne Password Reset',
-            content,
-            'Just Acne <justacne@mab-development.com>',
-            [user.email]
-        )
-        msg.content_subtype = "html"
-        msg.send()
+        # msg = EmailMessage(
+        #     'Just Acne Password Reset',
+        #     content,
+        #     'Just Acne <justacne@mab-development.com>',
+        #     [user.email]
+        # )
+        # msg.content_subtype = "html"
+        # msg.send()
+
+        message = {"key": settings.MAILCHIMP_TRANSACTIONAL_API_KEY,
+                   "message": {"from_email": "support@justacne.com", "subject": 'Just Acne Password Reset',
+                               "html": content, "to": [{"email": user.email, "type": "to"}]
+                               }
+                   }
+
+        headers = {'Content-type': 'application/json'}
+        requests.post(url="https://mandrillapp.com/api/1.0/messages/send", json=message, headers=headers)
+
         return PasswordResetEmailMutation(success=True, errors=None)
 
 
