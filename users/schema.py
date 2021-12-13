@@ -165,14 +165,14 @@ class CheckoutCompleteMutation(graphene.relay.ClientIDMutation, Output):
         # msg.content_subtype = "html"
         # msg.send()
 
-        message = {"key": settings.MAILCHIMP_TRANSACTIONAL_API_KEY,
-                   "message": {"from_email": "support@justacne.com", "subject": 'Welcome to Just Acne!',
-                               "html": content, "to": [{"email": user.email, "type": "to"}]
-                               }
-                   }
-
-        headers = {'Content-type': 'application/json'}
-        requests.post(url="https://mandrillapp.com/api/1.0/messages/send", json=message, headers=headers)
+        # message = {"key": settings.MAILCHIMP_TRANSACTIONAL_API_KEY,
+        #            "message": {"from_email": "support@justacne.com", "subject": 'Welcome to Just Acne!',
+        #                        "html": content, "to": [{"email": user.email, "type": "to"}]
+        #                        }
+        #            }
+        #
+        # headers = {'Content-type': 'application/json'}
+        # requests.post(url="https://mandrillapp.com/api/1.0/messages/send", json=message, headers=headers)
 
         try:
             mailchimp = MailchimpMarketing.Client()
