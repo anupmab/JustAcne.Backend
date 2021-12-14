@@ -6,7 +6,7 @@ import stripe
 import requests
 from datetime import datetime
 
-from django.core.mail import send_mail, EmailMessage
+#from django.core.mail import send_mail, EmailMessage
 from django.template.loader import render_to_string
 from django.conf import settings
 from graphql_jwt.decorators import login_required
@@ -15,7 +15,7 @@ from graphql_auth.bases import Output
 from graphene.types.generic import GenericScalar
 
 import mailchimp_marketing as MailchimpMarketing
-import mailchimp_transactional as MailchimpTransactional
+#import mailchimp_transactional as MailchimpTransactional
 
 from users.models import AuthUser, UserImage
 from users.utils import UserUtils
@@ -150,11 +150,12 @@ class CheckoutCompleteMutation(graphene.relay.ClientIDMutation, Output):
         user.phone_number = session["customer_details"]["phone"]
 
         user.email_token = ''.join(random.choices(string.ascii_uppercase+string.ascii_uppercase+string.digits, k=128))
+        user.date_joined = datetime.now()
         user.is_active = True
         user.save()
 
-        content = render_to_string('welcome_email.html', {'first_name': user.first_name.capitalize(),
-                                                          'year': str(datetime.now().year)})
+        # content = render_to_string('welcome_email.html', {'first_name': user.first_name.capitalize(),
+        #                                                   'year': str(datetime.now().year)})
 
         # msg = EmailMessage(
         #     'Welcome to Just Acne!',
