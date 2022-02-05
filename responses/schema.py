@@ -9,6 +9,8 @@ from users.models import CustomUserManager, AuthUser
 from responses.models import UserResponse
 from users.utils import UserUtils
 from graphene.types.generic import GenericScalar
+import mailchimp_marketing as MailchimpMarketing
+from django.conf import settings
 
 
 class QuestionResponseInput(graphene.InputObjectType):
@@ -49,6 +51,23 @@ class ResponseMutation(relay.ClientIDMutation, Output):
                 user = AuthUser.objects.create(email=email, username=email, is_active=False)
                 user.set_password(''.join(random.choices(string.ascii_uppercase + string.digits, k=10)))
                 user.save()
+
+            try:
+                mailchimp = MailchimpMarketing.Client()
+                mailchimp.set_config({
+                    "api_key": settings.MAILCHIMP_MARKETING_API_KEY,
+                    "server": settings.MAILCHIMP_SERVER_PREFIX
+                })
+                member_info = {
+                    "email_address": user.email,
+                    "merge_fields": {
+                        "FNAME": user.first_name,
+                        "LNAME": user.last_name
+                    }
+                }
+                mailchimp.lists.add_list_member('3488e2f198', member_info)
+            except:
+                traceback.print_exc()
 
             if first_name:
                 user.first_name = first_name
