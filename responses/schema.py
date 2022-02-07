@@ -52,23 +52,23 @@ class ResponseMutation(relay.ClientIDMutation, Output):
                 user.set_password(''.join(random.choices(string.ascii_uppercase + string.digits, k=10)))
                 user.save()
 
-            try:
-                mailchimp = MailchimpMarketing.Client()
-                mailchimp.set_config({
-                    "api_key": settings.MAILCHIMP_MARKETING_API_KEY,
-                    "server": settings.MAILCHIMP_SERVER_PREFIX
-                })
-                member_info = {
-                    "email_address": user.email,
-                    "status": "subscribed",
-                    "merge_fields": {
-                        "FNAME": user.first_name,
-                        "LNAME": user.last_name
+                try:
+                    mailchimp = MailchimpMarketing.Client()
+                    mailchimp.set_config({
+                        "api_key": settings.MAILCHIMP_MARKETING_API_KEY,
+                        "server": settings.MAILCHIMP_SERVER_PREFIX
+                    })
+                    member_info = {
+                        "email_address": user.email,
+                        "status": "subscribed",
+                        "merge_fields": {
+                            "FNAME": first_name,
+                            "LNAME": last_name
+                        }
                     }
-                }
-                mailchimp.lists.add_list_member('3488e2f198', member_info)
-            except:
-                traceback.print_exc()
+                    mailchimp.lists.add_list_member('3488e2f198', member_info)
+                except:
+                    traceback.print_exc()
 
             if first_name:
                 user.first_name = first_name
