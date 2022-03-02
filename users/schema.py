@@ -109,7 +109,7 @@ class StripeCheckoutMutation(graphene.relay.ClientIDMutation, Output):
                 'price_data': {
                     'currency': 'usd',
                     'product_data': {
-                        'name': 'Just Acne Consultation',
+                        'name': 'Shipping and handling',
                     },
                     'unit_amount': 1000,
                 },
