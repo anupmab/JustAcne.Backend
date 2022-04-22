@@ -110,6 +110,7 @@ class StripeCheckoutMutation(graphene.relay.ClientIDMutation, Output):
                     'currency': 'usd',
                     'product_data': {
                         'name': 'Shipping and handling',
+                        'description': """Your monthly subscription fee starts after the first month. You don’t need to do anything if you wish to continue treatment. Your subscription fee will range from $30-50 per month depending on your treatment plan (e.g., one cream, two creams, two creams and one oral medication). You will receive your treatment plan after you pay $10 and complete our medical intake questionnaire. You can cancel your subscription at any time."""
                     },
                     'unit_amount': 1000,
                 },
