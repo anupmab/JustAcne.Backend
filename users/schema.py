@@ -109,8 +109,8 @@ class StripeCheckoutMutation(graphene.relay.ClientIDMutation, Output):
                 'price_data': {
                     'currency': 'usd',
                     'product_data': {
-                        'name': 'Personalized acne medications delivered to your door.',
-                        'description': """A 90 day supply starting at $30 a month. Your first month is free."""
+                        'name': 'Clinical consultation',
+                        'description': """Your monthly subscription fee starts after the first month. You don’t need to do anything if you wish to continue treatment. Your subscription fee will range from $30-50 per month depending on your treatment plan (e.g., one cream, two creams, two creams and one oral medication). You will receive your treatment plan after you pay $10 and complete our medical intake questionnaire. You can cancel your subscription at any time."""
                     },
                     'unit_amount': 1000,
                 },
