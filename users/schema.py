@@ -190,7 +190,7 @@ class CheckoutCompleteMutation(graphene.relay.ClientIDMutation, Output):
                     "LNAME": user.last_name
                 }
             }
-            mailchimp.lists.add_list_member(settings.MAILCHIMP_LIST_ID, member_info)
+            mailchimp.lists.add_list_member('7e953a5918', member_info)
         except:
             traceback.print_exc()
 
